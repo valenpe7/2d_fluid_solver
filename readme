@@ -1,1 +1,12 @@
 required version of GNU gcc compiler: 4.8.2
+
+dirs:
+
+./bin ... compiled binary
+
+./dat ... input files
+./doc ... project documentation
+
+./out ... output data
+
+./src ... source code

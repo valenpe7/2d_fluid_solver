@@ -13,6 +13,7 @@
 class simulation_data {
 	
 	// class containing all the data necessary for doing a CFD simulation
+    friend class CFD_simulation;
 	
 public:
 
@@ -34,13 +35,11 @@ public:
 public:
 
 	// --- Geometry data -------------------------------------------------
-
 	std::array<double, 2> length;			// 2D domain size
-	std::array<unsigned, 2> nmax;		// number of interior cells
+	std::array<unsigned, 2> nmax;		    // number of interior cells
 	std::array<double, 2> delta;			// grid step size
 
 	// --- Time-stepping data --------------------------------------------
-
 	double t;								// current time value
 	double t_end;							// final time value
 	double delta_t;							// time step size
@@ -48,22 +47,26 @@ public:
 	double tau;								// safety factor for time step size control
 
 	// --- Pressure-iteration data ---------------------------------------
-
-	unsigned itermax;					// maximal number of pressure iterations in one time step
+	unsigned itermax;					    // maximal number of pressure iterations in one time step
 	double eps;								// stopping tolerance for the pressure iteration
 	double omega;							// relaxation factor for the pressure iteration
 	double gamma;							// upwind difference factor
 
 	// --- Problem-dependent quantities ----------------------------------
-
 	double Re;								// Reynolds number
 	std::array<double, 2> g;				// body forces (e.g. gravity)
 	std::array<int, 4> domain_boundary;		// boundary condition types for the 4 domain boundaries
 	std::array<double, 2> u_max_abs;		// absolute maximum velocties appearing during one timestep
 	std::array<double, 4> u_inflow;			// set inflow boundary conditions (only orthogonal)
+    
+    // --- Parallel computation properties ---------------------------------
+    int rank;                               // id of processor
+    int size;                               // number of processors
+    MPI_Status status;                      // MPI Status
+
+private:
 
 	// --- CFD-data arrays -----------------------------------------------
-
 	std::vector<std::vector<double>> u_x;	// velocity field in x-direction
 	std::vector<std::vector<double>> u_y;	// velocity field in y-direction
 	std::vector<std::vector<double>> p;    	// pressure field
@@ -72,12 +75,6 @@ public:
 	std::vector<std::vector<double>> F;		// F array (abbreviation)
 	std::vector<std::vector<double>> G;		// G array (abbreviation)
 	std::vector<std::vector<int>> flag;		// flag field for storing boundary obstacles in the fluid field
-
-    // --- Parallel computation --------------------------------------------
-    
-    int rank;                               // id of processor
-    int size;                               // number of processors
-    MPI_Status status;                      // MPI Status
 };
 
 #endif //SIMDATA_H

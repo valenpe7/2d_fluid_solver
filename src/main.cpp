@@ -1,6 +1,7 @@
 #include <iostream>
 #include <iomanip>
 #include <sstream>
+#include <chrono>
 
 #include <mpi.h>
 
@@ -8,7 +9,9 @@
 #include "inc/cfd_simulation.hpp"
 #include "inc/lib/lodepng/lodepng.h"
 
-void run_simulation(const std::string filename, int np, int id) {
+typedef std::chrono::high_resolution_clock Clock;
+
+void run_simulation(const std::string filename, const std::string output_path, int np, int id) {
 
     unsigned size_x, size_y;
     std::vector<unsigned char> image;
@@ -85,23 +88,23 @@ void run_simulation(const std::string filename, int np, int id) {
 	sim_data.delta_t = 1e-3;
 	sim_data.eps = 1e-1;
 	sim_data.omega = 0.67; // optimal value
-    
+
     // inflow in the channel (define at the west boundary)
-	sim_data.domain_boundary[D_WEST] = BC_INFLOW;
-    sim_data.u_inflow[D_WEST] = 1.0;
-
-	// outflow of the channel (define at the east boundary)
-	sim_data.domain_boundary[D_EAST] = BC_OUTFLOW;
-
-	// sides of the channel
-	sim_data.domain_boundary[D_NORTH] = BC_NO_SLIP;
-	sim_data.domain_boundary[D_SOUTH] = BC_NO_SLIP;
+	sim_data.domain_boundary[D_NORTH] = BC_INFLOW;
+    sim_data.u_inflow[D_NORTH] = 1.5;
+    
+    // outflow of the channel (define at the south boundary)
+	sim_data.domain_boundary[D_SOUTH] = BC_OUTFLOW;
+    
+    // sides of the channel
+	sim_data.domain_boundary[D_WEST] = BC_NO_SLIP;
+	sim_data.domain_boundary[D_EAST] = BC_NO_SLIP;
 
 	// create the simulation class and link the data
 	CFD_simulation simulation(&sim_data);
 
 	// visualization interval
-	double t_vis = 0.05;
+	double t_vis = 0.5;
 	double t_next_vis = 0.0;
     
     // file counter
@@ -116,22 +119,23 @@ void run_simulation(const std::string filename, int np, int id) {
 		}
 		// export data
         std::ostringstream stream;
-        stream << "vis_" << std::setw(4) << std::setfill('0') << count++ << ".vtk";
+        stream << output_path << "/vis_" << std::setw(4) << std::setfill('0') << count++ << ".vtk";
         output = stream.str();
-        // debug info
-        if(sim_data.rank == 0) {
-            std::cout << "writing data into file: " << output << std::endl;
-        }
-        sim_data.export_vtk(output);
-        MPI_Barrier(MPI_COMM_WORLD);
+        // debug info:
+        // if(sim_data.rank == 0) {
+        //      std::cout << "writing data into file: " << output << std::endl;
+        // }
+        // for performance tests without exporting the data!!
+        // sim_data.export_vtk(output);
+        // MPI_Barrier(MPI_COMM_WORLD);
 	}
 
 	return;
 }
 
 int main(int argc, char** argv) {
-	if (argc != 2) {
-		std::cout << "Usage: ./application_name.exe input_file.png" << std::endl;
+	if (argc != 3) {
+		std::cout << "usage: ./application_name.exe input_file.png output_folder" << std::endl;
         return -1;
     }
     
@@ -140,10 +144,22 @@ int main(int argc, char** argv) {
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+	// debug: performance test
+	auto t1 = Clock::now();
     
-	run_simulation(argv[1], size, rank);
+	run_simulation(argv[1], argv[2], size, rank);
+    
+	//debug: performance test
+	auto t2 = Clock::now();
     
     MPI_Finalize();
     
-	return 0;
+    //debug: performance test
+    if(rank == 0) {
+    	std::cout << "number of cores: " << size << std::endl;
+    	std::cout << "duration: " << std::chrono::duration_cast<std::chrono::seconds>(t2 - t1).count() << " s" << std::endl;
+    }
+
+    return 0;
 }

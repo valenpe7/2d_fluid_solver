@@ -94,9 +94,9 @@ void CFD_simulation::adapt_delta_t() {
 	}
 
 	// debug info
-    if(dat->rank == 0) {
-        std::cout << "set delta_t to " << dat->delta_t << " and gamma to " << dat->gamma << std::endl;
-    }
+    //if(dat->rank == 0) {
+    //    std::cout << "set delta_t to " << dat->delta_t << " and gamma to " << dat->gamma << std::endl;
+    //}
 }
 
 void CFD_simulation::update_domain() {
@@ -530,9 +530,9 @@ void CFD_simulation::solve_Poisson_Jacobi() {
         }
 	}
     // debug info
-    if(dat->rank == 0) {
-        std::cout << "solved Poisson eq. for t = " << dat->t << " using " << it << " iterations (max err = " << g_err << ")" << std::endl;
-    }
+    //if(dat->rank == 0) {
+    //    std::cout << "solved Poisson eq. for t = " << dat->t << " using " << it << " iterations (max err = " << g_err << ")" << std::endl;
+    //}
 }
 
 void CFD_simulation::compute_u_next() {
