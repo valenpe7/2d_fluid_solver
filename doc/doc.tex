@@ -114,9 +114,9 @@ F^{n} = u_x^{n} + \Delta t \left[ \frac{1}{Re}\left( \partial_x^{2} u_x^n + \par
 \begin{equation*}
 G^{n} = u_y^{n} + \Delta t \left[ \frac{1}{Re}\left( \partial_x^{2} u_y^n + \partial_y^{2} u_x^n \right) - \partial_y (u_y^2)^n - \partial_x (u_x u_y)^n + g_y \right].
 \end{equation*}
-The equation (\ref{3}) can reliably be solved with the \textit{Jacobi relaxation method}. To achieve the standard form of the equation, first the right hand side of the equation is computed at each grid point and time step. The update of the pressure then occurs in the method \texttt{solve\_Poisson\_Jacobi()} according to the updating formular:
+The equation (\ref{3}) can reliably be solved with the \textit{Jacobi relaxation method}. To achieve the standard form of the equation, first the right hand side of the equation is computed at each grid point $ (i \Delta x, j \Delta y) $ and time step $ \Delta t $. The update of the pressure then occurs in the method \texttt{solve\_Poisson\_Jacobi()} according to the updating formula:
 \begin{equation*}
-p_{i,j}^{\textnormal{it}+1} := (1-\omega)p_{i,j}^{\textnormal{it}} + \frac{\omega}{\frac{\varepsilon_i^E + \varepsilon_i^W}{\Delta x^2} + \frac{\varepsilon_j^N + \varepsilon_j^S}{\Delta y^2}} \left( \frac{\varepsilon_i^Ep_{i+1,j}^{\textmd{it}} + \varepsilon_i^Wp_{i-1,j}^{\textmd{it}}}{\Delta x^2}+\frac{\varepsilon_i^Np_{i,j + 1}^{\textmd{it}} + \varepsilon_i^Sp_{i, j-1}^{\textmd{it}}}{\Delta y^2} - \mathrm{RHS}_{i,j}\right)
+p_{i,j}^{\textnormal{it}+1} := (1-\omega)p_{i,j}^{\textnormal{it}} + \frac{\omega}{\frac{\varepsilon_i^E + \varepsilon_i^W}{\Delta x^2} + \frac{\varepsilon_j^N + \varepsilon_j^S}{\Delta y^2}} \left( \frac{\varepsilon_i^Ep_{i+1,j}^{\textmd{it}} + \varepsilon_i^Wp_{i-1,j}^{\textmd{it}}}{\Delta x^2}+\frac{\varepsilon_j^N p_{i,j + 1}^{\textmd{it}} + \varepsilon_j^S p_{i, j-1}^{\textmd{it}}}{\Delta y^2} - \mathrm{RHS}_{i,j}\right)
 \end{equation*}
 for $ i = 1 , \dots, i_{\max} $ and $ j = 1, \dots, j_{\max} $, where $\omega\in(0, 1)$ and the parameters $ \varepsilon \in \{0, 1\} $ indicate whether cell $ (i, j) $ lies adjacent to the domain boundary. The superscripts
 W, E, N, and S indicate in which direction (west, east, north, or south) the boundary lies. These updates are repeated until convergence is achieved. These computations are the most expensive part of the solver and parallelizing them should significantly increase the code performance.\\
@@ -125,12 +125,12 @@ We chose to consider the problem column-wise, thus the domain is divided into co
 
 \section{Compilation and executing}
 
-For the compilation, one can use the attached bash script "compile" which executes prepared makefile. Due to the usage of features introduced by the latest revision of C++ standards, the minimum required version of GCC is 4.8.\\
+For the compilation, one can use the attached bash script "compile" which executes the prepared makefile. Due to the usage of features introduced by the latest revision of C++ standards, the minimum required version of GCC is 4.8.\\
 
-To execute the fluid solver, a \texttt{.png} file is required to specify the environment \footnote{Obstacles in the environment are specified via the alpha channel of the prepared \texttt{.png} file. The value 0 indicates an empty field, while any other value indicates an obstacle.}. Compiled application takes the filename of the input image and output path for the exported \texttt{.vtk} files as an argument. Other parameters like fluid properties, the geometry of the simulation domain, boundary conditions, etc. can be specified in the code before the compilation. The  \texttt{.vtk} files can be displayed with a software tools such as \texttt{ParaView} or \texttt{VisIt}. \\
+To execute the fluid solver, a \texttt{.png} file is required to specify the environment \footnote{Obstacles in the environment are specified via the alpha channel of the prepared \texttt{.png} file. The value 0 indicates an empty field, while any other value indicates an obstacle.}. The compiled application takes the filename of the input image and output path for the exported \texttt{.vtk} files as an argument. Other parameters like fluid properties, the geometry of the simulation domain, boundary conditions, etc. can be specified in the code before the compilation. After simulation, the \texttt{.vtk} files can be displayed with a software tools such as \texttt{ParaView} or \texttt{VisIt}. \\
 
 \section{Results}
-As a part of the project, several performance test were done on a clusters operated and managed by Czech National Grid Organization MetaCentrum. We chose cluster minos.zcu.cz, which contains 50 nodes, each of the nodes has the following hardware specification:
+As a part of the project, several performance test were done on a clusters operated and managed by the Czech National Grid Organization MetaCentrum. We chose the cluster minos.zcu.cz, which contains 50 nodes, where each of the nodes has the following hardware specification:
 
 \begingroup
 \renewcommand*{\arraystretch}{1.5}
@@ -150,9 +150,9 @@ As a part of the project, several performance test were done on a clusters opera
 \end{table}
 \endgroup
 
-We made a model scene of size $ 1600 \times 400 $ cells with obstacles created using image, which is shown in Figure (2). The flow is coming from the north to the south boundary, in order to distribute workload between processes equivalently, since we have domain divided in columns. The temporary solution of exporting data from all processes into one \texttt{.vtk} file for visualization purposes is turned off during the performance tests, because significantly influences the computational time. The results of performed simulations can be seen in the Table (2).\\
+We made a model scene of size $ 1600 \times 400 $ cells with obstacles created using an image, which is shown in Figure (2). The flow is coming from the north to the south boundary, in order to distribute workload between processes equally, since we have divided the domain in columns. The temporary solution of exporting data from all processes into one \texttt{.vtk} file for visualization purposes is turned off during the performance tests, because it significantly influences the computational time. The results of performed simulations can be seen in the Table (2).\\
 
-From the measured times we calculated a speedup. The result is shown in Figure (3). It can be clearly seen, that up to 4 processes we achieved almost linear speedup. With the increase of the number of computational units, the value of speedup grows more slowly. Using more than 64 processors is inefficient in this case. The computational domain is too small, and thus the more time is spent for the communication between processes.
+From the measured times we calculated a speedup. The result is shown in Figure (3). It can be clearly seen, that up to 4 processes we achieved almost linear speedup. With the increase of the number of computational units, the value of speedup grows more slowly. Using more than 64 processors is inefficient in this case. The computational domain is too small, and too much time is spent for the communication between processes.
 
 \begin{figure}[h!]
 	\centering
@@ -190,7 +190,7 @@ From the measured times we calculated a speedup. The result is shown in Figure (
 
 \section{Conclusion}
 
-Even though the results of parallelization indicates significant improvement of the code, there is definitely still a lot of work to do. First, the domain should be divided into sub-domains not only in the x-direction, but also in the y-direction, to be sure, that the workload is distributed correctly independently of the fluid flow direction. Afterwards, we should handle the situation, when the number of cells is not divisor of the chosen number of processors. The next step should be rewriting of the routine for exporting the data. Current approach is inefficient and for the parallel computing completely useless. It has been used only to check if the solver works correctly in the parallel regime. The option could be exporting into parallel \texttt{.vtk} files.\\
+Even though the results of parallelization indicates significant improvement of the code, there is definitely still a lot of work to do. First, the domain should be divided into sub-domains not only in the x-direction, but also in the y-direction, to be sure, that the workload is distributed correctly independently of the fluid flow direction. Afterwards, we should handle the situation, when the number of cells is not a divisor of the chosen number of processors. The next step should be the rewriting of the routine for exporting the data. The current approach is inefficient and for the parallel computing completely useless. It has been used only to check if the solver works correctly in the parallel regime. The option could be exporting into parallel \texttt{.vtk} files.\\
 
 {\bf \noindent Acknowledgements} \\
 
@@ -204,6 +204,6 @@ Access to the CERIT-SC computing and storage facilities provided under the progr
 \end{flushright}
 
 \bibliographystyle{plain}
-\bibliography{bib}
+\bibliography{ref/bib}
 
 \end{document}
